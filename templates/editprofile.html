@@ -1,0 +1,77 @@
+<link rel="stylesheet" href="/static/style.css" type="text/css">
+{% block body %}
+
+<form action="/editprofile" method="POST">
+    <div class="login">
+    <div class="login-screen">
+    <div class="app-title">
+        <h1>Edit details</h1>
+    </div>
+    
+    <div class="details-form">
+    <div class="control-group">
+
+        {% if not user['name'] %}
+        <div class="details-form-field">
+            <h2>Name</h2>
+        </div>
+        <textarea width="auto" rows="5" type="text" class="details-input" rows="5" name="name"></textarea>
+        {% endif %}
+
+        {% if not user['background'] %}
+        <div class="details-form-field">
+            <h2>Background</h2>
+        </div>
+        <textarea width="auto" rows="5" type="text" class="details-input"  name="background"></textarea>
+        {% endif %}
+
+        {% if not user['publications'] %}
+        <div class="details-form-field">
+            <h2>Publications</h2>
+        </div>
+        <textarea width="auto" rows="5" type="text" class="details-input"  name="publications"></textarea>
+        {% endif %}
+
+        {% if not user['grants'] %}
+        <div class="details-form-field">
+            <h2>Grants</h2>
+        </div>
+        <textarea width="auto" rows="5" type="text" class="details-input"  name="grants"></textarea>
+        {% endif %}
+
+        {% if not user['awards'] %}
+        <div class="details-form-field">
+            <h2>Awards</h2>
+        </div>
+        <textarea width="auto" rows="5" type="text" class="details-input"  name="awards"></textarea>
+        {% endif %}
+
+        {% if not user['teaching'] %}
+        <div class="details-form-field">
+            <h2>Teaching</h2>
+        </div>
+        <textarea width="auto" rows="5" type="text" class="details-input"  name="teaching"></textarea>
+        {% endif %}
+
+
+        {% for row in user %}
+            {% if row!='_id' and row!='password' and row!='emailid' and not (user[row].isspace() or not user[row]) %}
+                <div class="details-form-field">
+                    <h2>{{row}}</h2>
+                </div>
+                <textarea width="auto" rows="5" type="text" class="details-input" name={{row}}>{{user[row]}} </textarea>
+            {% endif %}
+        {% endfor %}
+
+    <label class="login-field-icon fui-user" for="login-name"></label></div>
+    <button type="submit" class="btn btn-primary btn-large btn-block">Save</button>
+    <div>
+        <br/>Add new details? <br/>
+        <a href="{{ url_for('adddetails') }}">Click here</a>.
+    </div>
+    </div>
+    </div>
+    </div>
+</form>
+
+{% endblock %}

@@ -1,0 +1,26 @@
+<link rel="stylesheet" href="/static/style.css" type="text/css">
+{% block body %}
+
+<form action="/adddetails" method="POST">
+    <div class="login">
+    <div class="login-screen">
+    <div class="app-title">
+        <h1>Add details</h1>
+    </div>
+    
+    <div class="details-form">
+    <div class="control-group">
+
+        <div class="details-form-field">
+            <h2><input type="text" class="details-input" placeholder="Fieldname" name="newfield"></h2>
+        </div>
+        <textarea width="auto" rows="5" type="text" class="details-input" name="newvalue"> </textarea>
+
+    <label class="login-field-icon fui-user" for="login-name"></label></div>
+    <button type="submit" class="btn btn-primary btn-large btn-block">Save</button>
+    </div>
+    </div>
+    </div>
+</form>
+
+{% endblock %}

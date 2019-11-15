@@ -1,0 +1,45 @@
+// In mongo db
+
+// create database
+'use faculty' : Creates database faculty or swtiches to faculty db
+
+// create collection
+db.createCollection('profiles');
+
+// insert document in collection
+db.profiles.insert({name:"john doe",institute:"mit"});
+
+// insert array of documents in database
+db.profiles.insert([{name:"jane doe",institute:"iit",field:"math"},
+    {name:"modi",institute:"bjp",field:"politics"}]);
+
+// find docs in db
+db.profiles.find()
+db.profiles.find().pretty() // for well formatted output
+
+// update in mongo
+1) // completely replaces doc with first argument value by doc in the second argument
+db.profiles.update({field:"cs"},{name:"john doe",institute:"mit",field:"cs"});
+2) // using $set, we can just update particulars of the db
+db.profiles.update({name:"modi"},{$set:{designation:"pm"}});
+3) // unset the operation performed in the above
+db.profiles.update({name:"modi"},{$unset:{designation:"pm"}});
+
+
+
+// create admin user for database
+db.createUser({
+    user:"shivam",
+    pwd:"password",
+    roles:[ "readWrite", "dbAdmin" ]
+});
+
+
+
+CONNECT TO POSTGRES FROM PYTHON
+// create user in postgres who can create databases: CREATE USER manuel WITH PASSWORD 'jw8s0F4' CREATEDB;
+// to login inside postgres terminal : psql -U admin facultydb
+import psycopg2
+connection = psycopg2.connect("dbname='facultydb' user='admin' host='localhost' password='password'")
+cursor = connection.cursor()
+cursor.execute("""select * from employee""")
