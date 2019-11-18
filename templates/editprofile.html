@@ -55,7 +55,7 @@
 
 
         {% for row in user %}
-            {% if row!='_id' and row!='password' and row!='emailid' and not (user[row].isspace() or not user[row]) %}
+            {% if row!='_id' and row!='emp_id' and not (user[row].isspace() or not user[row]) %}
                 <div class="details-form-field">
                     <h2>{{row}}</h2>
                 </div>

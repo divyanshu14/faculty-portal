@@ -1,0 +1,30 @@
+insert into employee(emp_name) values ('shivam');
+
+
+insert into department(dep_name) values('cse');
+insert into department(dep_name) values('ee');
+insert into department(dep_name) values('me');
+
+insert into faculty(fac_email,fac_emp_id,fac_dep_name,password) values ('ep@gmail.com',(select max(emp_id) from employee),'cse', crypt('password', gen_salt('bf')));
+
+insert into employee(emp_name) values ('aa');
+insert into employee(emp_name) values ('bb');
+insert into employee(emp_name) values ('cc');
+
+insert into cc_faculty(cc_fac_post_email,cc_fac_post, cc_fac_emp_id,cc_fac_end_date,password) values ('adfa@gmail.com', 'adfa', (select emp_id from employee where emp_name = 'aa'), '2020-10-20',crypt('password', gen_salt('bf')));
+insert into cc_faculty(cc_fac_post_email,cc_fac_post, cc_fac_emp_id,cc_fac_end_date,password) values ('dfa@gmail.com', 'dfa', (select emp_id from employee where emp_name = 'bb'), '2020-10-20',crypt('password', gen_salt('bf')));
+insert into cc_faculty(cc_fac_post_email,cc_fac_post, cc_fac_emp_id,cc_fac_end_date,password) values ('dir@gmail.com', 'director', (select emp_id from employee where emp_name = 'cc'), '2020-10-20',crypt('password', gen_salt('bf')));
+
+insert into hod (hod_post_email,hod_fac_email,hod_end_date,password) values ('hod.cse@gmail.com','ep@gmail.com','2020-5-5',crypt('password', gen_salt('bf')));
+
+insert into fac_leave_app_path (curr_holder,next_holder) values ('owner','adfa'), ('adfa', 'hod'), ('hod', 'director'), ('director','approve_or_reject');
+insert into fac_leave_app_path (curr_holder,next_holder) values ('hod','adfa');
+insert into fac_leave_app_path (curr_holder,next_holder) values ('adfa','dfa');
+
+call launch_new_leave_application('sp@gmail.com',4,'die');
+
+call launch_new_leave_application('hod.cse@gmail.com',3,'die');
+
+insert into hods_deans_leave_app_path(curr_holder,next_holder) values ('owner','director');
+
+call forward(8,'move')

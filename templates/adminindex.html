@@ -1,0 +1,24 @@
+<link rel="stylesheet" href="/static/style.css" type="text/css">
+{% block body %}
+
+    <div class="login">
+    <div class="login-screen">
+    <div class="app-title">
+    <h1>Admin Portal</h1>
+    <div>
+            <form action = {{url_for('faculty')}}>
+                <button type="submit" class="btn btn-primary btn-large btn-block">New faculty</button>
+            </form>
+            <br/>
+            <form action = {{url_for('ccfaculty')}}>
+                <button type="submit" class="btn btn-primary btn-large btn-block">New CC Faculty</button>
+            </form>
+            <form action = {{url_for('hod')}}>
+                <button type="submit" class="btn btn-primary btn-large btn-block">Make HOD</button>
+            </form>
+        </div>
+    </div>
+    </div>
+
+{% endblock %}
+

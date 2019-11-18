@@ -1,0 +1,40 @@
+<link rel="stylesheet" href="/static/style.css" type="text/css">
+{% block body %}
+
+<form action="/ccfaculty" method="POST">
+    <div class="login">
+    <div class="login-screen">
+    <div class="app-title">
+    <h1>Create Cross Cutting Faculty</h1>
+    </div>
+    <div class="login-form">
+
+    <div class="control-group">
+            <input type="text" class="login-field" value="" placeholder="Name" name="name">
+    <label class="login-field-icon fui-user" for="login-name"></label></div>
+
+    <div class="control-group">
+            <input type="text" class="login-field" value="" placeholder="director or dfa or adfa" name="position">
+    <label class="login-field-icon fui-user" for="login-name"></label></div>
+    
+    <div class="control-group">
+                    <input type="text" class="login-field" value="" placeholder="emailid" name="emailid">
+    <label class="login-field-icon fui-user" for="login-name"></label></div>
+
+    <div class="control-group">
+        <input type="text" class="login-field" value="" placeholder="End date: yyyy-mm-dd" name="end_date">
+    <label class="login-field-icon fui-lock" for="login-pass"></label></div>
+
+    <div class="control-group">
+                    <input type="password" class="login-field" value="" placeholder="password" name="password">
+    <label class="login-field-icon fui-lock" for="login-pass"></label></div>
+
+    <button type="submit" class="btn btn-primary btn-large btn-block">Create</button>
+    
+    </div>
+    </div>
+    </div>
+    
+</form>
+
+{% endblock %}

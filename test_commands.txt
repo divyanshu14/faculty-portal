@@ -1,0 +1,5 @@
+insert into employee(emp_name) values ('shivam');
+
+insert into department(dep_name) values('cse');
+
+insert into faculty(fac_email,fac_emp_id,fac_dep_name,password) values ('sp@gmail.com',(select max(emp_id) from employee),'cse', crypt('password', gen_salt('bf')));

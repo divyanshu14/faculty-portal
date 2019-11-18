@@ -1,0 +1,30 @@
+<link rel="stylesheet" href="/static/style.css" type="text/css">
+{% block body %}
+
+<body>
+    <div class="login">
+    <div class="login-screen">
+    <div class="app-title">
+        <h1>{{user['name']}}</h1>
+    </div>
+    {% for row in user %}
+        {% if row!='_id' and row!='emp_id' and row!='name' and not (user[row].isspace() or not user[row]) %}
+            <div class="view-details">
+                <b>{{row}} : </b>{{user[row]}}
+            </div>
+            
+        {% endif %}
+    {% endfor %}
+    <div>
+        <form action = {{url_for('editprofile')}}>
+            <button type="submit" class="btn btn-primary btn-large btn-block">Add/Edit details</button>
+        </form>
+        <form action = {{url_for('logout')}}>
+            <button type="submit" class="btn btn-primary btn-large btn-block">Logout</button>
+        </form>
+    </div>
+    </div>
+</div>
+</body>
+
+{% endblock %}
