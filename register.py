@@ -31,7 +31,7 @@ def isempty(str):
     return False
 
 @app.route('/', methods=['POST','GET'])
-def index():
+def adminindex():
     return render_template('adminindex.html')
 
 

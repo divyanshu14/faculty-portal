@@ -45,9 +45,10 @@
     width: 760px;
     }
     .view-details{
-        text-align: left;
-        padding: 50px;
-        font-size: 20px;
+    text-align: left;
+    padding: 30px;
+    padding-bottom: 40px;
+    font-size: 20px;
     }
 
     

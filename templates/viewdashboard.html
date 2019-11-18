@@ -4,27 +4,139 @@
 <body>
     <div class="login">
     <div class="login-screen">
-    <div class="app-title">
-        <h1>{{user['name']}}</h1>
+        <div class="app-title">
+            <h1>{{user['name']}}</h1>
+        </div>
+        {% for row in user %}
+            {% if row!='_id' and row!='emp_id' and row!='name' and not (user[row].isspace() or not user[row]) %}
+                <div class="view-details">
+                    <b>{{row}} : </b>{{user[row]}}
+                </div>
+                
+            {% endif %}
+        {% endfor %}
+        <div>
+            <form action = {{url_for('editprofile')}}>
+                <button type="submit" class="btn btn-primary btn-large btn-block">Add/Edit details</button>
+            </form>
+        </div>
     </div>
-    {% for row in user %}
-        {% if row!='_id' and row!='emp_id' and row!='name' and not (user[row].isspace() or not user[row]) %}
-            <div class="view-details">
-                <b>{{row}} : </b>{{user[row]}}
+    </div>
+
+    {% if pending_requests %}
+        <div class="login">
+        <div class="login-screen">
+            <div>
+                <div class="app-title">
+                    <h1>Pending Requests</h1>
+                </div>
+                {% for row in pending_requests %}
+                    <form method="POST">
+                        Application id: {{row[0]}}<br/>
+                        Launched by: {{row[2]}} <br/>
+                        Next holder: {{row[4]}} <br/>
+                        Borrowed from next year: {{row[5]}} <br/>
+                        Days: {{row[6]}} <br/>
+                        <button type="submit" formaction="/applicationdetails/{{row[0]}}">View details</button>
+                        <div class="details-form">
+                        <div class="control-group">
+                        </br>
+                        Add Comments
+                        <textarea width="auto" rows="5" type="text" class="details-input" name="comment"> </textarea>
+                    
+                        <label class="login-field-icon fui-user" for="login-name"></label></div>
+                        <button type="submit" formaction="/forwardapplication/{{row[0]}}">Forward</button>
+                        <button type="submit" formaction="/returnapplication/{{row[0]}}">Return</button>
+                        </div>
+                    </form>
+                    <br/><br/>
+                {% endfor %}
             </div>
-            
+        </div>
+        </div>
+    {% endif %}
+
+    <div class="login">
+    <div class="login-screen">
+        <div>
+            <div class="app-title">
+                <h1>Remaining leaves</h1>
+            </div>
+            {% for row in rem_leaves %}
+                <div class="view-details">
+                    <b>{{row[1]}} : </b>{{row[2]}}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+    </div>
+
+    <div class="login">
+    <div class="login-screen">
+        <div>
+            <div class="app-title">
+                <h1>Current Application Status</h1>
+            </div>
+            {% for row in app_status %}
+                    Application id: {{row[0]}} <br/>
+                    Current holder: {{row[3]}} <br/>
+                    Next holder: {{row[4]}} <br/>
+                    Borrowed from next year: {{row[5]}} <br/>
+                    Days: {{row[6]}} <br/>
+                    <br/><br/>
+            {% endfor %}
+        </div>
+    </div>
+    </div>
+
+    <div class="login">
+    <div class="login-screen">
+        <div>
+            <div class="app-title">
+                <h1>Finished Application Status</h1>
+            </div>
+            {% for row in finished_applications %}
+                Application id: {{row[0]}} <br/>
+                Is approved: {{row[1]}} <br/>
+                Borrowed leaves from next year: {{row[4]}} <br/>
+                No. of required leaves: {{row[5]}} <br/>
+                <br/><br/>
+            {% endfor %}
+        </div>
+    </div>
+    </div>
+
+    <form action="/newapplication" method="POST">
+        <div class="login">
+        <div class="login-screen">
+        <div class="app-title">
+            <h1>Create New Application</h1>
+        </div>
+        {% if msg %}
+            {{msg}}
         {% endif %}
-    {% endfor %}
+        <div class="details-form">
+        <div class="control-group">
+    
+            <div class="details-form-field">
+                <h2><input type="text" class="details-input" placeholder="No. of days" name="days"></h2>
+            </div>
+            Comments
+            <textarea width="auto" rows="5" type="text" class="details-input" name="comment"> </textarea>
+    
+        <label class="login-field-icon fui-user" for="login-name"></label></div>
+        <button type="submit" class="btn btn-primary btn-large btn-block">Submit</button>
+        </div>
+        </div>
+        </div>
+    </form>
+
     <div>
-        <form action = {{url_for('editprofile')}}>
-            <button type="submit" class="btn btn-primary btn-large btn-block">Add/Edit details</button>
-        </form>
         <form action = {{url_for('logout')}}>
-            <button type="submit" class="btn btn-primary btn-large btn-block">Logout</button>
+            <button type="submit">Logout</button>
         </form>
     </div>
-    </div>
-</div>
+    
 </body>
 
 {% endblock %}

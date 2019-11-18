@@ -24,7 +24,27 @@ connection = psycopg2.connect(
         user=os.environ.get("DB_USER"),
         password=os.environ.get("DB_PASSWORD")
 )
+connection.autocommit = True
 cursor = connection.cursor()
+
+
+def get_finished_status():
+    cursor.execute("select * from approved_or_rejected_leave_application where launched_by_emp_id = " + str(session['emp_details'][0]))
+    return cursor.fetchall()
+
+
+
+def get_pending_requests():
+    cursor.execute("select * from curr_leave_application where curr_holder_email = '" + session['emailid']  + "'")
+    return cursor.fetchall()
+
+
+
+def get_my_application_status():
+    cursor.execute("select * from curr_leave_application where launched_by_emp_id = " + str(session['emp_details'][0]))
+    return cursor.fetchall()
+
+
 
 def isempty(str):
     if str.isspace() or not str:
@@ -32,9 +52,22 @@ def isempty(str):
     return False
 
 
+
+def get_leaves_list():
+    cursor.execute("select * from rem_leaves where emp_id = " + str(session['emp_details'][0]))
+    leaves_list = cursor.fetchall()
+    if len(leaves_list) == 0:
+        ltuple = (session['emp_details'][0],datetime.datetime.now().year,20)
+        leaves_list.insert(0,ltuple)
+    return leaves_list
+
+
+
 @app.route('/', methods=['POST', 'GET'])
 def index():
     return render_template('index.html')
+
+
 
 @app.route('/requestleave', methods=['POST', 'GET'])
 def requestleave():
@@ -89,12 +122,8 @@ def login():
         print(session['emp_details'])
         # now connect to mongodb profile of this employee
         user_profile = users.find_one({'emp_id': session['emp_details'][0]})
-        cursor.execute("select * from rem_leaves where emp_id = " + str(session['emp_details'][0]))
-        leaves_list = cursor.fetchall()
-        if len(leaves_list) == 0:
-            ltuple = (session['emp_details'][0],datetime.datetime.now().year,20)
-            leaves_list.insert(0,ltuple)
-        return render_template('viewdashboard.html', user = user_profile, leaves = leaves_list) 
+        return render_template('viewdashboard.html', user = user_profile, finished_applications = get_finished_status(),
+        rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests()) 
     return render_template('login.html')
 
 
@@ -103,13 +132,18 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+
+
 @app.route('/editprofile', methods=['POST', 'GET'])
 def editprofile():
     if request.method == 'POST':
         for fieldname in request.form:
             users.update({'emp_id': session['emp_details'][0]},{"$set": {fieldname: request.form[fieldname]}})
-        return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}))
+        return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
+        rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests())
     return render_template('editprofile.html', user = users.find_one({'emp_id': session['emp_details'][0]}))
+
+
 
 @app.route('/adddetails', methods=['POST', 'GET'])
 def adddetails():
@@ -117,6 +151,64 @@ def adddetails():
         users.update({'emp_id': session['emp_details'][0]},{"$set": {request.form['newfield']: request.form['newvalue']}})
         return render_template('editprofile.html', user = users.find_one({'emp_id': session['emp_details'][0]}))
     return render_template('adddetails.html')
+
+
+
+@app.route('/newapplication', methods=['POST','GET'])
+def newapplication():
+    if request.method == 'POST':
+        if request.form['days'].isnumeric():
+            days = int(request.form['days'])
+            if days>0 :
+                req = ("call launch_new_leave_application('" + session['emailid'] + "', " + str(days) + ", '" + request.form['comment'] + "');")
+                try:
+                    cursor.execute(req)
+                except:
+                    return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
+                    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests(), msg = 'You already have an application pending!')
+        else:
+            return 'Invalid input given'
+    return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
+    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests())
+
+
+
+@app.route('/applicationdetails/<string:id>', methods=['POST','GET'])
+def applicationdetails(id):
+    cursor.execute("select * from application_detail where app_id = " + id)
+    det = cursor.fetchall()
+    print(det)
+    return render_template('papertrail.html', details = det)
+
+
+
+@app.route('/forwardapplication/<string:id>', methods=['POST','GET'])
+def forwardapplication(id):
+    cursor.execute("select * from can_approve_or_reject(" + id + ")")
+    val = cursor.fetchone()[0]
+    if val:
+        cursor.execute("call approve_or_reject(" + id + ", true, '" + request.form['comment'] + "')")
+    else:
+        cursor.execute("call forward(" + id + ", '" + request.form['comment'] + "')")
+    return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
+    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests())
+
+
+
+@app.route('/returnapplication/<string:id>', methods=['POST','GET'])
+def returnapplication(id):
+    cursor.execute("select * from can_approve_or_reject(" + id + ")")
+    val = cursor.fetchone()[0]
+    print(val)
+    if val:
+        cursor.execute("call approve_or_reject(" + id + ", false, '" + request.form['comment'] + "')")
+    else:
+        req = "call send_back_to_owner_for_more_comments(" + id + ", '" + request.form['comment'] + "')"
+        print(req)
+        cursor.execute("call send_back_to_owner_for_more_comments(" + id + ", '" + request.form['comment'] + "')")
+    return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
+    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests())
+
 
 
 if __name__ == "__main__":
