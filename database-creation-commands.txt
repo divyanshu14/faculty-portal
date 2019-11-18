@@ -481,9 +481,9 @@ $$;
 /* function to check if the user is authenticated to approve or reject, i.e. is he the last one in application path */
 /* check this everytime since the last person will approve_or_reject, not forward */
 /* note that at one time, leave application can only be with one person */
-CREATE FUNCTION can_approve_or_reject(la_app_id INTEGER) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION can_approve_or_reject(la_app_id INTEGER) RETURNS BOOLEAN AS $$
 BEGIN
-	IF (SELECT next_holder_email FROM curr_leave_application WHERE la_app_id = app_id) = NULL THEN
+	IF (SELECT next_holder_email FROM curr_leave_application WHERE la_app_id = app_id) IS NULL THEN
 		RETURN TRUE;
 	ELSE
 		RETURN FALSE;

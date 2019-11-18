@@ -6,6 +6,13 @@
     <div class="login-screen">
     <div class="app-title">
     <h1>Faculty Portal</h1>
+    {% for row in users %}
+        <div class="view-details">
+            {{row['name']}}
+            <button type="submit" formaction="/viewfaculty/{{row['emp_id']}}">View</button>
+            <br/><br/>
+        </div>
+    {% endfor %}
     </div>
         <button type="submit" class="btn btn-primary btn-large btn-block">Sign in</button>
     </div>

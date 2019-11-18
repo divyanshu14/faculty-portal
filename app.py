@@ -12,8 +12,7 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.config['MONGO_DBNAME'] = 'faculty'
-app.config["MONGO_URI"] = "mongodb://localhost:27017/faculty"
+app.config["MONGO_URI"] = "mongodb://localhost:27017/" + os.environ.get("MONGO_DBNAME")
 
 mongo = PyMongo(app)
 users = mongo.db.profiles
@@ -36,7 +35,17 @@ def get_finished_status():
 
 def get_pending_requests():
     cursor.execute("select * from curr_leave_application where curr_holder_email = '" + session['emailid']  + "'")
-    return cursor.fetchall()
+    temp = cursor.fetchall()
+    # print(temp)
+    temp_list = []
+    for row in temp:
+        # print("---------------------------------------")
+        # print(row)
+        cursor.execute("select * from can_approve_or_reject(" + str(row[0]) + ")")
+        temp_list.append(list(row))
+        temp_list[-1].append(cursor.fetchone()[0])
+    # print  (temp_list)
+    return temp_list
 
 
 
@@ -65,7 +74,20 @@ def get_leaves_list():
 
 @app.route('/', methods=['POST', 'GET'])
 def index():
-    return render_template('index.html')
+    return render_template('index.html',users = users.find({}))
+
+
+@app.route('/viewfaculty/<string:id>', methods=['POST', 'GET'])
+def viewuser(id):
+    id = int(id)
+    return render_template('viewfaculty.html', user =users.find_one({'emp_id': id}) )
+
+
+@app.route('/viewdashboard', methods=['POST','GET'])
+def viewdashboard():
+    user_profile = users.find_one({'emp_id': session['emp_details'][0]})
+    return render_template('viewdashboard.html', user = user_profile, finished_applications = get_finished_status(),
+    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests()) 
 
 
 
@@ -77,9 +99,11 @@ def requestleave():
     return render_template('newleave.html')
 
 
-@app.route('/login', methods=['POST'])
+@app.route('/login', methods=['POST','GET'])
 def login():
-    if(request.form):
+    # if request.method = 'GET':
+    #     return redirect(url_for('login'))
+    if request.form :
         # login_user = users.find_one({'emailid': request.form['emailid']})
         cursor.execute("select * from all_email where '" + request.form['emailid'] + "' = email")
         temp = cursor.fetchone()
@@ -121,9 +145,7 @@ def login():
 
         print(session['emp_details'])
         # now connect to mongodb profile of this employee
-        user_profile = users.find_one({'emp_id': session['emp_details'][0]})
-        return render_template('viewdashboard.html', user = user_profile, finished_applications = get_finished_status(),
-        rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests()) 
+        return redirect(url_for('viewdashboard'))
     return render_template('login.html')
 
 
@@ -139,8 +161,7 @@ def editprofile():
     if request.method == 'POST':
         for fieldname in request.form:
             users.update({'emp_id': session['emp_details'][0]},{"$set": {fieldname: request.form[fieldname]}})
-        return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
-        rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests())
+        return redirect(url_for('viewdashboard'))
     return render_template('editprofile.html', user = users.find_one({'emp_id': session['emp_details'][0]}))
 
 
@@ -168,8 +189,7 @@ def newapplication():
                     rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests(), msg = 'You already have an application pending!')
         else:
             return 'Invalid input given'
-    return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
-    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests())
+    return redirect(url_for('viewdashboard'))
 
 
 
@@ -186,30 +206,31 @@ def applicationdetails(id):
 def forwardapplication(id):
     cursor.execute("select * from can_approve_or_reject(" + id + ")")
     val = cursor.fetchone()[0]
+    print(val)
     if val:
         cursor.execute("call approve_or_reject(" + id + ", true, '" + request.form['comment'] + "')")
     else:
         cursor.execute("call forward(" + id + ", '" + request.form['comment'] + "')")
-    return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
-    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests())
+    return redirect(url_for('viewdashboard'))
 
 
 
 @app.route('/returnapplication/<string:id>', methods=['POST','GET'])
 def returnapplication(id):
-    cursor.execute("select * from can_approve_or_reject(" + id + ")")
-    val = cursor.fetchone()[0]
-    print(val)
-    if val:
-        cursor.execute("call approve_or_reject(" + id + ", false, '" + request.form['comment'] + "')")
-    else:
-        req = "call send_back_to_owner_for_more_comments(" + id + ", '" + request.form['comment'] + "')"
-        print(req)
-        cursor.execute("call send_back_to_owner_for_more_comments(" + id + ", '" + request.form['comment'] + "')")
-    return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
-    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests())
+    # cursor.execute("select * from can_approve_or_reject(" + id + ")")
+    # val = cursor.fetchone()[0]
+    # print(val)
+    # if val:
+    #     cursor.execute("call approve_or_reject(" + id + ", false, '" + request.form['comment'] + "')")
+    # else:
+    cursor.execute("call send_back_to_owner_for_more_comments(" + id + ", '" + request.form['comment'] + "')")
+    return redirect(url_for('viewdashboard'))
 
 
+@app.route('/rejectapplication/<string:id>', methods=['POST','GET'])
+def rejectapplication(id):
+    cursor.execute("call approve_or_reject(" + id + ", false, '" + request.form['comment'] + "')")
+    return redirect(url_for('viewdashboard'))
 
 if __name__ == "__main__":
     app.secret_key = os.urandom(12)

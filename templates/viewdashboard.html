@@ -37,6 +37,7 @@
                         Next holder: {{row[4]}} <br/>
                         Borrowed from next year: {{row[5]}} <br/>
                         Days: {{row[6]}} <br/>
+                        <!-- Can Approve: {{row[7]}} <br/> -->
                         <button type="submit" formaction="/applicationdetails/{{row[0]}}">View details</button>
                         <div class="details-form">
                         <div class="control-group">
@@ -45,8 +46,13 @@
                         <textarea width="auto" rows="5" type="text" class="details-input" name="comment"> </textarea>
                     
                         <label class="login-field-icon fui-user" for="login-name"></label></div>
-                        <button type="submit" formaction="/forwardapplication/{{row[0]}}">Forward</button>
                         <button type="submit" formaction="/returnapplication/{{row[0]}}">Return</button>
+                        {% if row[7] %}
+                            <button type="submit" formaction="/forwardapplication/{{row[0]}}">Approve</button>
+                            <button type="submit" formaction="/rejectapplication/{{row[0]}}">Reject</button>
+                        {% else %}
+                            <button type="submit" formaction="/forwardapplication/{{row[0]}}">Forward</button>
+                        {% endif %}
                         </div>
                     </form>
                     <br/><br/>
