@@ -32,8 +32,13 @@ def isempty(str):
 
 @app.route('/', methods=['POST','GET'])
 def adminindex():
-    return render_template('adminindex.html')
+    return render_template('adminindex.html', users = users.find({}))
 
+
+@app.route('/viewfaculty/<string:id>', methods=['POST', 'GET'])
+def viewuser(id):
+    id = int(id)
+    return render_template('viewfaculty.html', user =users.find_one({'emp_id': id}) )
 
 # form for creating new employee with entries of emp_name, dep_type, emailid, password
 @app.route('/faculty', methods=['POST','GET'])
@@ -51,14 +56,13 @@ def faculty():
         cursor.execute("insert into faculty(fac_email,fac_emp_id,fac_dep_name,password) values ('" 
         + request.form['emailid'] + "', " + str(emp_id) + ", '" + request.form['dep_name'] + "', crypt('" + request.form['password'] + "', gen_salt('bf')))")
         connection.commit()
-        users.insert({'emp_id': emp_id, 'name': request.form['name']})
+        users.insert({'emp_id': emp_id, 'name': request.form['name'], 'department': request.form['dep_name']})
         return 'Done'
     return render_template('registerfac.html')
 
 
-
-@app.route('/hod', methods=['POST','GET'])
-def hod():
+@app.route('/createhod', methods=['POST','GET'])
+def createhod():
     if request.form:
         if isempty(request.form['facemailid']) or isempty(request.form['password']) or isempty(request.form['hodemailid']) or isempty(request.form['end_date']) :
             return 'Fields cannot be empty!'
@@ -66,9 +70,26 @@ def hod():
         cursor.execute("insert into hod(hod_post_email,hod_fac_email,hod_end_date,password) values ('" 
         + request.form['hodemailid'] + "', '" + request.form['facemailid'] + "', '" + request.form['end_date'] + "', crypt('" + request.form['password'] + "', gen_salt('bf')));")
         connection.commit();
-        return redirect(url_for('index'))
+        return redirect(url_for('adminindex'))
         # except:
         #     return "Error with the request!"
+    return render_template('makehod.html')
+
+@app.route('/hod', methods=['POST','GET'])
+def hod():
+    if request.form:
+        if isempty(request.form['facemailid']) or isempty(request.form['end_date']) :
+            return 'Fields cannot be empty!'
+        # try:
+        cursor.execute("select fac_dep_name from faculty where fac_email = '" + request.form['facemailid'] + "'")
+        dept = cursor.fetchone()[0]
+        cursor.execute("select fac_email from faculty where fac_dep_name = '" + dept+ "' and fac_email = any(select hod_fac_email from hod)")
+        oldhod_fac_email = cursor.fetchone()
+        if not oldhod_fac_email:
+            return render_template('createhod.html')
+        cursor.execute("update hod set hod_fac_email = '" + request.form['facemailid'] + "', hod_end_date = '" + request.form['end_date'] + "' where hod_fac_email = '" + oldhod_fac_email[0] + "'")
+        connection.commit();
+        return redirect(url_for('adminindex'))
     return render_template('makehod.html')
 
 

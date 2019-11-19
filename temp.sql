@@ -272,7 +272,7 @@ $$
 LANGUAGE plpgsql;
 
 CREATE TRIGGER add_hod_post_email_to_all_email_trigger
-BEFORE INSERT
+BEFORE INSERTc
 ON hod
 FOR EACH ROW
 EXECUTE PROCEDURE add_hod_post_email_to_all_email();
@@ -481,9 +481,9 @@ $$;
 /* function to check if the user is authenticated to approve or reject, i.e. is he the last one in application path */
 /* check this everytime since the last person will approve_or_reject, not forward */
 /* note that at one time, leave application can only be with one person */
-CREATE FUNCTION can_approve_or_reject(la_app_id INTEGER) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION can_approve_or_reject(la_app_id INTEGER) RETURNS BOOLEAN AS $$
 BEGIN
-	IF (SELECT next_holder_email FROM curr_leave_application WHERE la_app_id = app_id) = NULL THEN
+	IF (SELECT next_holder_email FROM curr_leave_application WHERE la_app_id = app_id) IS NULL THEN
 		RETURN TRUE;
 	ELSE
 		RETURN FALSE;
@@ -621,7 +621,25 @@ CREATE PROCEDURE send_back_to_owner_for_more_comments(la_app_id INTEGER, la_comm
 LANGUAGE plpgsql
 AS $$
 DECLARE
+	la_curr_holder_email VARCHAR (255);
+	la_curr_holder_emp_id INTEGER;
 BEGIN
+	SELECT curr_holder_email INTO la_curr_holder_email FROM curr_leave_application WHERE app_id = la_app_id;
+
+	IF (SELECT which_table FROM all_email WHERE email = la_curr_holder_email) = 'fac' THEN
+		SELECT fac_emp_id INTO la_curr_holder_emp_id FROM faculty WHERE fac_email = la_curr_holder_email;
+	ELSIF (SELECT which_table FROM all_email WHERE email = la_curr_holder_email) = 'hod' THEN
+		SELECT fac_emp_id INTO la_curr_holder_emp_id FROM faculty, hod WHERE fac_email = hod_fac_email AND hod_post_email = la_curr_holder_email;
+	ELSE
+		SELECT cc_fac_emp_id INTO la_curr_holder_emp_id FROM cc_faculty WHERE cc_fac_post_email = la_curr_holder_email;
+	END IF;
+
+	INSERT INTO application_detail (app_id, stage, holder_emp_id, holder_email, comments) VALUES (la_app_id, (SELECT MAX(stage) FROM application_detail WHERE app_id = la_app_id) + 1, la_curr_holder_emp_id, la_curr_holder_email, la_comments);
+	UPDATE curr_leave_application SET next_holder_email = curr_holder_email WHERE app_id = la_app_id;
+	UPDATE curr_leave_application SET curr_holder_email = launched_by_email WHERE app_id = la_app_id;
 	COMMIT;
 END;
 $$;
+
+
+/*-------------------------------------------------------------------------------------------------------------*/

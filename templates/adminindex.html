@@ -6,6 +6,16 @@
     <div class="app-title">
     <h1>Admin Portal</h1>
     <div>
+            <form method='POST'>
+            {% for row in users %}
+                <div class="view-details">
+                    {{row['name']}}
+                    
+                        <button type="submit" formaction="/viewfaculty/{{row['emp_id']}}">View</button>
+                    <br/>
+                </div>
+            {% endfor %}
+            </form>
             <form action = {{url_for('faculty')}}>
                 <button type="submit" class="btn btn-primary btn-large btn-block">New faculty</button>
             </form>
@@ -13,9 +23,10 @@
             <form action = {{url_for('ccfaculty')}}>
                 <button type="submit" class="btn btn-primary btn-large btn-block">New CC Faculty</button>
             </form>
+            <br/>
             <form action = {{url_for('hod')}}>
                 <button type="submit" class="btn btn-primary btn-large btn-block">Make HOD</button>
-            </form>
+            </form> 
         </div>
     </div>
     </div>
