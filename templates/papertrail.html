@@ -9,7 +9,10 @@
     </div>
     <div>
         {% for row in details %}
-            {{row}}
+            Email: {{row[3]}}<br/>
+            Comment: {{row[4]}}<br/>
+            Datetime: {{row[5]}}<br/>
+            <br/><br/>
         {% endfor %}
     </div>
     </div>

@@ -272,7 +272,7 @@ $$
 LANGUAGE plpgsql;
 
 CREATE TRIGGER add_hod_post_email_to_all_email_trigger
-BEFORE INSERT
+BEFORE INSERTc
 ON hod
 FOR EACH ROW
 EXECUTE PROCEDURE add_hod_post_email_to_all_email();

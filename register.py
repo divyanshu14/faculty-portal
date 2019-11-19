@@ -60,7 +60,15 @@ def faculty():
 @app.route('/hod', methods=['POST','GET'])
 def hod():
     if request.form:
-        a = 5
+        if isempty(request.form['facemailid']) or isempty(request.form['password']) or isempty(request.form['hodemailid']) or isempty(request.form['end_date']) :
+            return 'Fields cannot be empty!'
+        # try:
+        cursor.execute("insert into hod(hod_post_email,hod_fac_email,hod_end_date,password) values ('" 
+        + request.form['hodemailid'] + "', '" + request.form['facemailid'] + "', '" + request.form['end_date'] + "', crypt('" + request.form['password'] + "', gen_salt('bf')));")
+        connection.commit();
+        return redirect(url_for('index'))
+        # except:
+        #     return "Error with the request!"
     return render_template('makehod.html')
 
 

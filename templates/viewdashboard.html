@@ -89,6 +89,9 @@
                     Next holder: {{row[4]}} <br/>
                     Borrowed from next year: {{row[5]}} <br/>
                     Days: {{row[6]}} <br/>
+                    <form method="POST">
+                        <button type="submit" formaction="/applicationdetails/{{row[0]}}">View details</button>
+                    </form>
                     <br/><br/>
             {% endfor %}
         </div>
@@ -106,6 +109,9 @@
                 Is approved: {{row[1]}} <br/>
                 Borrowed leaves from next year: {{row[4]}} <br/>
                 No. of required leaves: {{row[5]}} <br/>
+                <form method="POST">
+                    <button type="submit" formaction="/applicationdetails/{{row[0]}}">View details</button>
+                </form>
                 <br/><br/>
             {% endfor %}
         </div>

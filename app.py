@@ -112,6 +112,9 @@ def login():
             return render_template('login.html',msg = 'Emailid not registered')
         employee_type = temp[1]
 
+        cursor.execute("select current_date")
+        curr_date = cursor.fetchone()
+
         if employee_type == 'fac': # validate password and get emp_id
             cursor.execute("select * from faculty where '" + request.form['emailid'] + "' = fac_email AND password = crypt('" + request.form['password'] + "',password)")
         
@@ -134,10 +137,14 @@ def login():
             session['emp_details'] = cursor.fetchone()
 
         elif employee_type == 'cc_fac':
+            if curr_date[0] > session['login_user'][5]:
+                return "Your tenure has ended! Contact Admin."
             cursor.execute("select * from employee where emp_id = " + str(temp[3]))
             session['emp_details'] = cursor.fetchone()
 
         elif employee_type == 'hod':
+            if curr_date[0] > session['login_user'][4]:
+                return "Your tenure has ended! Contact Admin."
             cursor.execute("select fac_emp_id from faculty where fac_email = '" + temp[2] + "'")
             val = cursor.fetchone()[0]
             cursor.execute("select * from employee where emp_id = " + str(val))
@@ -185,8 +192,7 @@ def newapplication():
                 try:
                     cursor.execute(req)
                 except:
-                    return render_template('viewdashboard.html', user = users.find_one({'emp_id': session['emp_details'][0]}), finished_applications = get_finished_status(),
-                    rem_leaves = get_leaves_list(), app_status = get_my_application_status(), pending_requests = get_pending_requests(), msg = 'You already have an application pending!')
+                    redirect(url_for('viewdashboard'))
         else:
             return 'Invalid input given'
     return redirect(url_for('viewdashboard'))
