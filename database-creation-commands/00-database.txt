@@ -1,0 +1,9 @@
+\c postgres
+
+DROP DATABASE faculty_portal;
+
+CREATE DATABASE faculty_portal;
+
+\c faculty_portal
+
+CREATE EXTENSION pgcrypto;

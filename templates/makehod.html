@@ -9,15 +9,18 @@
     </div>
     <div class="login-form">
 
-    {% if nohod %}
-        <div class="control-group">
-                <input type="text" class="login-field" value="" placeholder="HOD emailid" name="hodemailid">
-        <label class="login-field-icon fui-user" for="login-name"></label></div>
-    {% endif %}
+    
+    <div class="control-group">
+            <input type="text" class="login-field" value="" placeholder="HOD emailid" name="post_email">
+    <label class="login-field-icon fui-user" for="login-name"></label></div>
 
     <div class="control-group">
-                    <input type="text" class="login-field" value="" placeholder="Faculty emailid" name="facemailid">
+                    <input type="text" class="login-field" value="" placeholder="Faculty emailid" name="fac_email">
     <label class="login-field-icon fui-user" for="login-name"></label></div>
+
+    <div class="control-group">
+            <input type="text" class="login-field" value="" placeholder="Start date: yyyy-mm-dd" name="start_date">
+        <label class="login-field-icon fui-lock" for="login-pass"></label></div>
 
     <div class="control-group">
         <input type="text" class="login-field" value="" placeholder="End date: yyyy-mm-dd" name="end_date">

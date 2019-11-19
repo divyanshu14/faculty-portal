@@ -12,14 +12,14 @@ load_dotenv()
 
 app = Flask(__name__)
 
-app.config["MONGO_URI"] = "mongodb://localhost:27017/" + os.environ.get("MONGO_DBNAME")
+app.config["MONGO_URI"] = "mongodb://localhost:27017/" + os.environ.get("MONGO_DBNAME2")
 
 mongo = PyMongo(app)
 users = mongo.db.profiles
 
 connection = psycopg2.connect(
         host=os.environ.get("DB_HOST"),
-        database=os.environ.get("DB_DATABASE"),
+        database=os.environ.get("DB_DATABASE2"),
         user=os.environ.get("DB_USER"),
         password=os.environ.get("DB_PASSWORD")
 )

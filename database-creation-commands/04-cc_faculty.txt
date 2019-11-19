@@ -1,0 +1,111 @@
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE TYPE cc_fac_post_choices AS ENUM(
+	'adfa',
+	'dfa',
+	'director'
+);
+
+/* changing cc_fac_post_email, cc_fac_post, cc_fac_emp_id and cc_fac_end_date is not allowed directly */
+/* in order to change the person on some post (for eg when his tenure is over), call change_cc_faculty function */
+/* i cannot log changes when cc_fac_emp_id is changed because cc_fac_post and cc_fac_end_date form a unique key */
+CREATE TABLE cc_faculty(
+	cc_fac_post_email VARCHAR (255) NOT NULL PRIMARY KEY,
+	password TEXT NOT NULL,
+	cc_fac_post cc_fac_post_choices NOT NULL UNIQUE,
+	/* first remove him as director, then delete the employee */
+	cc_fac_emp_id INTEGER REFERENCES employee(emp_id) ON DELETE RESTRICT NOT NULL,
+	cc_fac_start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+	cc_fac_end_date DATE NOT NULL,
+	/* UNIQUE (cc_fac_post, cc_fac_end_date), */
+	CHECK (cc_fac_start_date < cc_fac_end_date)
+);
+
+/* faculty whose tenure is over and have been changed */
+CREATE TABLE changed_cc_faculty(
+	cc_fac_post_email VARCHAR (255) NOT NULL,
+	password TEXT NOT NULL,
+	cc_fac_post cc_fac_post_choices NOT NULL,
+	cc_fac_emp_id INTEGER REFERENCES is_employee_deleted(emp_id) NOT NULL,
+	cc_fac_start_date DATE NOT NULL,
+	cc_fac_end_date DATE NOT NULL,
+	PRIMARY KEY (cc_fac_post, cc_fac_end_date)
+);
+
+CREATE TABLE is_cc_faculty_changed(
+	cc_fac_post cc_fac_post_choices NOT NULL,
+	cc_fac_end_date DATE NOT NULL,
+	is_changed BOOLEAN NOT NULL,
+	PRIMARY KEY (cc_fac_post, cc_fac_end_date)
+);
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION check_cc_faculty_change() RETURNS TRIGGER AS
+$$
+BEGIN
+	IF OLD.cc_fac_post_email <> NEW.cc_fac_post_email OR OLD.cc_fac_post <> NEW.cc_fac_post THEN
+		RAISE EXCEPTION 'Post email or post should not be changed';
+	END IF;
+	INSERT INTO changed_cc_faculty (cc_fac_post_email, password, cc_fac_post, cc_fac_emp_id, cc_fac_start_date, cc_fac_end_date) VALUES (OLD.cc_fac_post_email, OLD.password, OLD.cc_fac_post, OLD.cc_fac_emp_id, OLD.cc_fac_start_date, OLD.cc_fac_end_date);
+	UPDATE is_cc_faculty_changed SET is_changed = TRUE WHERE cc_fac_post = OLD.cc_fac_post AND cc_fac_end_date = OLD.cc_fac_end_date;
+	INSERT INTO is_cc_faculty_changed (cc_fac_post, cc_fac_end_date, is_changed) VALUES (NEW.cc_fac_post, NEW.cc_fac_end_date, FALSE);
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER check_cc_faculty_change_trigger
+BEFORE UPDATE
+ON cc_faculty
+FOR EACH ROW
+EXECUTE PROCEDURE check_cc_faculty_change();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION change_cc_faculty(old_cc_fac_post cc_fac_post_choices, new_cc_fac_emp_id INTEGER, new_cc_fac_start_date DATE, new_cc_fac_end_date DATE) RETURNS VOID AS $$
+BEGIN
+	UPDATE cc_faculty SET cc_fac_emp_id = new_cc_fac_emp_id, cc_fac_start_date = new_cc_fac_start_date, cc_fac_end_date = new_cc_fac_end_date WHERE cc_fac_post = old_cc_fac_post;
+END; $$
+LANGUAGE PLPGSQL;
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION populate_is_cc_faculty_changed() RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO is_cc_faculty_changed (cc_fac_post, cc_fac_end_date, is_changed) VALUES (NEW.cc_fac_post, NEW.cc_fac_end_date, FALSE);
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER populate_is_cc_faculty_changed_trigger
+BEFORE INSERT
+ON cc_faculty
+FOR EACH ROW
+EXECUTE PROCEDURE populate_is_cc_faculty_changed();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION cc_faculty_deletion_not_allowed() RETURNS TRIGGER AS
+$$
+BEGIN
+	RAISE EXCEPTION 'Cannot delete from this table';
+	RETURN OLD;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER cc_faculty_deletion_not_allowed_trigger
+BEFORE DELETE
+ON cc_faculty
+FOR EACH ROW
+EXECUTE PROCEDURE cc_faculty_deletion_not_allowed();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/

@@ -1,0 +1,71 @@
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE TYPE which_table_choices AS ENUM(
+	'fac',
+	'cc_fac',
+	'hod'
+);
+
+/* read only */
+/* what if faculty gets deleted */
+CREATE TABLE all_email(
+	email VARCHAR (255) NOT NULL PRIMARY KEY,
+	which_table which_table_choices NOT NULL
+);
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION add_fac_email_to_all_email() RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO all_email (email, which_table) VALUES (NEW.fac_email, 'fac');
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER add_fac_email_to_all_email_trigger
+BEFORE INSERT
+ON faculty
+FOR EACH ROW
+EXECUTE PROCEDURE add_fac_email_to_all_email();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION add_cc_fac_post_email_to_all_email() RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO all_email (email, which_table) VALUES (NEW.cc_fac_post_email, 'cc_fac');
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER add_cc_fac_post_email_to_all_email_trigger
+BEFORE INSERT
+ON cc_faculty
+FOR EACH ROW
+EXECUTE PROCEDURE add_cc_fac_post_email_to_all_email();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION add_hod_post_email_to_all_email() RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO all_email (email, which_table) VALUES (NEW.hod_post_email, 'hod');
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER add_hod_post_email_to_all_email_trigger
+BEFORE INSERT
+ON hod
+FOR EACH ROW
+EXECUTE PROCEDURE add_hod_post_email_to_all_email();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/

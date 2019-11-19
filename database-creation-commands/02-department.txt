@@ -1,0 +1,81 @@
+/*-------------------------------------------------------------------------------------------------------------*/
+
+/* changing dep_name is not allowed */
+CREATE TABLE department(
+	dep_name VARCHAR (255) NOT NULL PRIMARY KEY,
+	dep_date_of_start DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+/* read only */
+CREATE TABLE deleted_department(
+	dep_name VARCHAR (255) NOT NULL PRIMARY KEY,
+	dep_date_of_start DATE NOT NULL,
+	dep_date_of_end DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+/* read only */
+CREATE TABLE is_department_deleted(
+	dep_name VARCHAR (255) NOT NULL PRIMARY KEY,
+	is_deleted BOOLEAN NOT NULL
+);
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION check_dep_name_change() RETURNS TRIGGER AS
+$$
+BEGIN
+	IF OLD.dep_name <> NEW.dep_name THEN
+		RAISE EXCEPTION 'Department name cannot be changed';
+	END IF;
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER check_dep_name_change_trigger
+BEFORE UPDATE
+ON department
+FOR EACH ROW
+EXECUTE PROCEDURE check_dep_name_change();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+/* this won't allow you to make a new department with same name again even if it is deleted */
+CREATE OR REPLACE FUNCTION populate_is_department_deleted() RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO is_department_deleted (dep_name, is_deleted) VALUES (NEW.dep_name, FALSE);
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER populate_is_department_deleted_trigger
+BEFORE INSERT
+ON department
+FOR EACH ROW
+EXECUTE PROCEDURE populate_is_department_deleted();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION log_deleted_department() RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO deleted_department (dep_name, dep_date_of_start) VALUES (OLD.dep_name, OLD.dep_date_of_start);
+	UPDATE is_department_deleted SET is_deleted = TRUE WHERE dep_name = OLD.dep_name;
+	RETURN OLD;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER log_deleted_department_trigger
+AFTER DELETE
+ON department
+FOR EACH ROW
+EXECUTE PROCEDURE log_deleted_department();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/

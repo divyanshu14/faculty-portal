@@ -1,0 +1,15 @@
+Any primary key cannot be the same as any existing or even any deleted primary key of the same table. Even if CSE department is deleted, you cannot make another department named CSE. In such cases, contact DB ADMIN.
+
+Changing primary keys is not allowed because they are referenced at many places. It would take considerble amount of time to write triggers that change these references. At some places, it is easy (for example in departments, it is easy to change dep_name) but to follow the same design pattern, we do not allow to change primary keys whatsoever. However, deletion and insertion is the natural way to go and is supported to full extent.
+
+Never change the read only tables.
+
+Changing emp_id is not allowed.
+
+Changing fac_emp_id is not allowed. Even department change means deleting faculty from department and then adding new in the other department.
+
+Cross cutting faculty need to be manually changed, although, they won't be allowed to view their specific pages once their tenure is over irrespective of wether or not new cc_faculty has been appointed in their place.
+
+We have assumed that all employees are granted 20 leaves per year. Since taking leaves from next year is allowed, an employee can take more than 20 leaves, but he must not exceed the number of leaves allowed the next year also. He cannot borrow from the year following the year from where he had borrowed the leaves.
+
+There are no dates associated with the leave. If an employee launches a leave application in 2019, then it is assumed that he wants leaves in that year alone. Even if an application which was launched in 2019 is approved in 2020, leaves of the year 2019 will be deducted. This is because there was no notion of dates in the problem statement, and having it included would have required a lot more effort. It seemed that the main focus was on application paths and leaves per year rather than dates.

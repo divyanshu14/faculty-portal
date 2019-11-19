@@ -1,0 +1,71 @@
+INSERT INTO employee (emp_name) VALUES ('Gunturi'), ('Somitra'), ('Martha'), ('Deepak'), ('SKDas'), ('me_prof'), ('me_hod'), ('ee_prof'), ('ee_hod');
+
+INSERT INTO department (dep_name) VALUES ('cse'), ('me'), ('ee');
+
+INSERT INTO faculty (fac_email, password, fac_emp_id, fac_dep_name) VALUES ('gunturi@iitrpr.ac.in', crypt('password', gen_salt('bf')), 1, 'cse'), ('somitra@iitrpr.ac.in', crypt('password', gen_salt('bf')), 2, 'cse'), ('me_prof@iitrpr.ac.in', crypt('password', gen_salt('bf')), 6, 'me'), ('me_prof_hod@iitrpr.ac.in', crypt('password', gen_salt('bf')), 7, 'me'), ('ee_prof@iitrpr.ac.in', crypt('password', gen_salt('bf')), 8, 'ee'), ('ee_prof_hod@iitrpr.ac.in', crypt('password', gen_salt('bf')), 9, 'ee');
+
+INSERT INTO cc_faculty (cc_fac_post_email, password, cc_fac_post, cc_fac_emp_id, cc_fac_end_date) VALUES ('adfa@iitrpr.ac.in', crypt('password', gen_salt('bf')), 'adfa', 3, '2020-10-20'), ('dfa@iitrpr.ac.in', crypt('password', gen_salt('bf')), 'dfa', 4, '2021-10-20'), ('director@iitrpr.ac.in', crypt('password', gen_salt('bf')), 'director', 4, '2022-10-20');
+
+INSERT INTO hod (hod_post_email, password, hod_fac_email, hod_end_date) VALUES ('hod.cse@iitrpr.ac.in', crypt('password', gen_salt('bf')), 'somitra@iitrpr.ac.in', '2023-10-20'), ('hod.me@iitrpr.ac.in', crypt('password', gen_salt('bf')), 'me_prof_hod@iitrpr.ac.in', '2023-10-20'), ('hod.ee@iitrpr.ac.in', crypt('password', gen_salt('bf')), 'ee_prof_hod@iitrpr.ac.in', '2023-10-20');
+
+INSERT INTO fac_leave_app_path (curr_holder, next_holder) VALUES ('owner', 'hod'), ('hod', 'dfa'), ('dfa', 'approve_or_reject');
+
+INSERT INTO hods_deans_leave_app_path (curr_holder, next_holder) VALUES ('owner', 'director'), ('director', 'approve_or_reject');
+
+CALL launch_new_leave_application('gunturi@iitrpr.ac.in', 12, 'I want 12 days leave');
+
+SELECT * FROM curr_leave_application;
+SELECT * FROM leave_application_status;
+SELECT * FROM application_detail;
+SELECT * FROM rem_leaves;
+SELECT * FROM approved_or_rejected_leave_application;
+
+CALL forward(1, 'Yes, okay with HOD CSE');
+
+SELECT * FROM curr_leave_application;
+SELECT * FROM leave_application_status;
+SELECT * FROM application_detail;
+SELECT * FROM rem_leaves;
+SELECT * FROM approved_or_rejected_leave_application;
+
+CALL approve_or_reject(1, TRUE, 'Granted Permission');
+
+SELECT * FROM curr_leave_application;
+SELECT * FROM leave_application_status;
+SELECT * FROM application_detail;
+SELECT * FROM rem_leaves;
+SELECT * FROM approved_or_rejected_leave_application;
+
+/* ---------------------------------------------------------------------------------------------- */
+
+CALL launch_new_leave_application('gunturi@iitrpr.ac.in', 15, 'I want another leave, now for 15 days.');
+
+CALL launch_new_leave_application('gunturi@iitrpr.ac.in', 15, 'Will you allow me 2 leave applications simultaneously?');
+
+SELECT * FROM curr_leave_application;
+SELECT * FROM leave_application_status;
+SELECT * FROM application_detail;
+SELECT * FROM rem_leaves;
+SELECT * FROM approved_or_rejected_leave_application;
+
+CALL forward(2, 'This time it is not okay');
+
+SELECT * FROM curr_leave_application;
+SELECT * FROM leave_application_status;
+SELECT * FROM application_detail;
+SELECT * FROM rem_leaves;
+SELECT * FROM approved_or_rejected_leave_application;
+
+CALL approve_or_reject(2, FALSE, 'Not granted');
+
+SELECT * FROM curr_leave_application;
+SELECT * FROM leave_application_status;
+SELECT * FROM application_detail;
+SELECT * FROM rem_leaves;
+SELECT * FROM approved_or_rejected_leave_application;
+
+/* ---------------------------------------------------------------------------------------------- */
+
+CALL launch_new_leave_application('hod.cse@iitrpr.ac.in', 22, 'Going abroad.');
+
+CALL approve_or_reject(4, TRUE, 'Director approves it.');

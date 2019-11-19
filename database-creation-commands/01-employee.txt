@@ -1,0 +1,85 @@
+/*-------------------------------------------------------------------------------------------------------------*/
+
+/* changing emp_id is not allowed */
+/* leaving the institute means deleting from employee table, which gets inserted automatically by trigger in deleted_employee table */
+CREATE TABLE employee(
+	emp_id SERIAL PRIMARY KEY,
+	emp_name VARCHAR (255) NOT NULL,
+	emp_inst_doj DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+/* read only */
+CREATE TABLE deleted_employee(
+	emp_id INTEGER PRIMARY KEY,
+	emp_name VARCHAR (255) NOT NULL,
+	emp_inst_doj DATE NOT NULL,
+	emp_inst_dol DATE NOT NULL DEFAULT CURRENT_DATE
+);
+
+/* read only */
+/* due to this table, emp_id in employee and deleted_employee tables combined can never be same */
+CREATE TABLE is_employee_deleted(
+	emp_id INTEGER PRIMARY KEY,
+	is_deleted BOOLEAN NOT NULL
+);
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION check_emp_id_change() RETURNS TRIGGER AS
+$$
+BEGIN
+	IF OLD.emp_id <> NEW.emp_id THEN
+		RAISE EXCEPTION 'Employee ID cannot be changed';
+	END IF;
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER check_emp_id_change_trigger
+BEFORE UPDATE
+ON employee
+FOR EACH ROW
+EXECUTE PROCEDURE check_emp_id_change();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+/* this won't allow you to enter a person with same pid again even if it is deleted */
+CREATE OR REPLACE FUNCTION populate_is_employee_deleted() RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO is_employee_deleted (emp_id, is_deleted) VALUES (NEW.emp_id, FALSE);
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER populate_is_employee_deleted_trigger
+BEFORE INSERT
+ON employee
+FOR EACH ROW
+EXECUTE PROCEDURE populate_is_employee_deleted();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION log_deleted_employee() RETURNS TRIGGER AS
+$$
+BEGIN
+	INSERT INTO deleted_employee (emp_id, emp_name, emp_inst_doj) VALUES (OLD.emp_id, OLD.emp_name, OLD.emp_inst_doj);
+	UPDATE is_employee_deleted SET is_deleted = TRUE WHERE emp_id = OLD.emp_id;
+	RETURN OLD;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER log_deleted_employee_trigger
+AFTER DELETE
+ON employee
+FOR EACH ROW
+EXECUTE PROCEDURE log_deleted_employee();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/

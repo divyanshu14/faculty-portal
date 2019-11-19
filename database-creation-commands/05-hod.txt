@@ -1,0 +1,104 @@
+/*-------------------------------------------------------------------------------------------------------------*/
+
+/* assumption - hod must be faculty in the department whose hod he is */
+/* department of hod can be found from his faculty information */
+/* hod_end_date cannot be changed once set */
+CREATE TABLE hod(
+	hod_post_email VARCHAR (255) NOT NULL PRIMARY KEY,
+	password TEXT NOT NULL,
+	hod_fac_email VARCHAR (255) REFERENCES faculty(fac_email) ON DELETE RESTRICT NOT NULL,
+	hod_start_date DATE NOT NULL DEFAULT CURRENT_DATE,
+	hod_end_date DATE NOT NULL,
+	CHECK (hod_start_date < hod_end_date)
+);
+
+CREATE TABLE changed_hod(
+	hod_post_email VARCHAR (255) NOT NULL,
+	password TEXT NOT NULL,
+	hod_fac_email VARCHAR (255) REFERENCES is_faculty_deleted(fac_email) NOT NULL,
+	hod_start_date DATE NOT NULL,
+	hod_end_date DATE NOT NULL,
+	PRIMARY KEY (hod_post_email, hod_end_date)
+);
+
+CREATE TABLE is_hod_changed(
+	hod_post_email VARCHAR (255) NOT NULL,
+	hod_end_date DATE NOT NULL,
+	is_changed BOOLEAN NOT NULL,
+	PRIMARY KEY (hod_post_email, hod_end_date)
+);
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION check_hod_change() RETURNS TRIGGER AS
+$$
+BEGIN
+	IF (SELECT faculty.fac_dep_name FROM faculty WHERE faculty.fac_email = OLD.hod_fac_email) <> (SELECT faculty.fac_dep_name FROM faculty WHERE faculty.fac_email = NEW.hod_fac_email) THEN
+		RAISE EXCEPTION 'Changed HOD must be from the same department';
+	END IF;
+	INSERT INTO changed_hod (hod_post_email, password, hod_fac_email, hod_start_date, hod_end_date) VALUES (OLD.hod_post_email, OLD.password, OLD.hod_fac_email, OLD.hod_start_date, OLD.hod_end_date);
+	UPDATE is_hod_changed SET is_changed = TRUE WHERE hod_post_email = OLD.hod_post_email AND hod_end_date = OLD.hod_end_date;
+	INSERT INTO is_hod_changed (hod_post_email, hod_end_date, is_changed) VALUES (NEW.hod_post_email, NEW.hod_end_date, FALSE);
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER check_hod_change_trigger
+BEFORE UPDATE
+ON hod
+FOR EACH ROW
+EXECUTE PROCEDURE check_hod_change();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE FUNCTION change_hod(old_hod_post_email VARCHAR (255), new_hod_fac_email VARCHAR (255), new_hod_start_date DATE, new_hod_end_date DATE) RETURNS VOID AS $$
+BEGIN
+	UPDATE hod SET hod_fac_email = new_hod_fac_email, hod_start_date = new_hod_start_date, hod_end_date = new_hod_end_date WHERE hod_post_email = old_hod_post_email;
+END; $$
+LANGUAGE PLPGSQL;
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION check_one_hod_per_dept_populate_is_hod_changed() RETURNS TRIGGER AS
+$$
+BEGIN
+	/* check one hod per department */
+	IF (SELECT faculty.fac_dep_name FROM faculty WHERE faculty.fac_email = NEW.hod_fac_email) = ANY (SELECT faculty.fac_dep_name FROM faculty, hod WHERE faculty.fac_email = hod.hod_fac_email) THEN
+		RAISE EXCEPTION 'HOD from the same department already exists';
+	END IF;
+	INSERT INTO is_hod_changed (hod_post_email, hod_end_date, is_changed) VALUES (NEW.hod_post_email, NEW.hod_end_date, FALSE);
+	RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER check_one_hod_per_dept_populate_is_hod_changed_trigger
+BEFORE INSERT
+ON hod
+FOR EACH ROW
+EXECUTE PROCEDURE check_one_hod_per_dept_populate_is_hod_changed();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
+
+CREATE OR REPLACE FUNCTION hod_deletion_not_allowed() RETURNS TRIGGER AS
+$$
+BEGIN
+	RAISE EXCEPTION 'Cannot delete from this table';
+	RETURN OLD;
+END;
+$$
+LANGUAGE plpgsql;
+
+CREATE TRIGGER hod_deletion_not_allowed_trigger
+BEFORE DELETE
+ON hod
+FOR EACH ROW
+EXECUTE PROCEDURE hod_deletion_not_allowed();
+
+
+/*-------------------------------------------------------------------------------------------------------------*/
